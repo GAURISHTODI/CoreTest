@@ -1,0 +1,43 @@
+# Docker Compose — Phase 1: Database layer only
+# Phase 2 will add Kafka, Redis, and service containers
+#
+# Usage: docker compose up -d
+
+services:
+  orders-db:
+    image: postgres:16
+    container_name: coretest-orders-db
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - orders_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  inventory-db:
+    image: postgres:16
+    container_name: coretest-inventory-db
+    environment:
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5433:5432"
+    volumes:
+      - inventory_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  orders_data:
+  inventory_data:
