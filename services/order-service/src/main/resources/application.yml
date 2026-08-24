@@ -6,7 +6,7 @@ spring:
     name: order-service
 
   datasource:
-    url: ${ORDER_DB_URL:jdbc:postgresql://localhost:5432/orders_db}
+    url: ${ORDER_DB_URL:jdbc:postgresql://127.0.0.1:5432/orders_db?timezone=UTC}
     username: ${ORDER_DB_USER:postgres}
     password: ${ORDER_DB_PASSWORD:changeme}
     driver-class-name: org.postgresql.Driver
@@ -18,6 +18,18 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+app:
+  kafka:
+    topic:
+      order-placed: ${KAFKA_TOPIC_ORDER_PLACED:order.placed}
 
 logging:
   level:

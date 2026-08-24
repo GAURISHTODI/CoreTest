@@ -5,8 +5,8 @@ import com.coretest.order.exception.OrderNotFoundException;
 import com.coretest.order.model.Order;
 import com.coretest.order.model.OrderStatus;
 import com.coretest.order.repository.OrderRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,25 +16,28 @@ import java.util.UUID;
 /**
  * Business logic for order operations.
  *
- * Phase 1: basic CRUD — create order as PENDING, retrieve by ID, list with filter.
- * Phase 2 (TODO): publish order.placed Kafka event on creation,
- *                  validate productId against Inventory Service before saving.
+ * Creates orders as PENDING and publishes order.placed events to Kafka
+ * for the Inventory Service to consume and decrement stock.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderEventPublisher eventPublisher;
 
     /**
-     * Create a new order with status PENDING.
-     *
-     * TODO (Phase 2): Before saving, validate productId exists by calling
-     *   GET http://inventory-service:8000/api/products/{productId}
-     *   → return 404 if product not found.
-     *
-     * TODO (Phase 2): After saving, publish order.placed event to Kafka.
+     * Constructor — eventPublisher is optional (null when Kafka is disabled in test profile).
+     */
+    public OrderService(OrderRepository orderRepository,
+                        @Autowired(required = false) OrderEventPublisher eventPublisher) {
+        this.orderRepository = orderRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * Create a new order with status PENDING, then publish
+     * an order.placed Kafka event for inventory processing.
      */
     @Transactional
     public Order createOrder(CreateOrderRequest request) {
@@ -48,6 +51,13 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         log.info("Order created: id={}, status={}", saved.getId(), saved.getStatus());
+
+        // Publish order.placed event to Kafka (async, non-blocking)
+        if (eventPublisher != null) {
+            eventPublisher.publish(saved);
+        } else {
+            log.warn("Kafka publisher not available — skipping order.placed event for orderId={}", saved.getId());
+        }
 
         return saved;
     }

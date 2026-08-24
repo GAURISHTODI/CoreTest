@@ -52,6 +52,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Kafka -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
         <!-- H2 (in-memory DB for local/test profile) -->
         <dependency>
             <groupId>com.h2database</groupId>

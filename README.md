@@ -74,12 +74,6 @@ Java, Spring Boot, Kafka, Docker, Kubernetes, Selenium, Playwright, REST Assured
 - Python 3.11+
 - Node.js 18+
 
-### Run Locally
-```bash
-git clone https://github.com/<your-username>/coretest.git
-cd coretest
-docker-compose up --build
-```
 
 ### Run Tests
 ```bash
@@ -133,4 +127,4 @@ coretest/
 ---
 
 ## Author
-[Your Name] — Built as part of SDET internship preparation.
+Gaurish Todi — Built as part of SDET internship preparation.

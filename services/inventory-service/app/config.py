@@ -12,16 +12,15 @@ class Settings(BaseSettings):
     falls back to defaults matching .env.example.
     """
 
-    # PostgreSQL (use env var to override for Docker/production)
-    # Default: SQLite for local dev without Docker
-    inventory_db_url: str = "sqlite:///./inventory.db"
+    # PostgreSQL (Docker: inventory-db on port 5433)
+    inventory_db_url: str = "postgresql+psycopg://postgres:changeme@localhost:5433/inventory_db"
 
     # Redis (Phase 2)
     redis_host: str = "localhost"
     redis_port: int = 6379
 
     # Kafka (Phase 2)
-    kafka_bootstrap_servers: str = "localhost:9092"
+    kafka_bootstrap_servers: str = "localhost:9094"
     kafka_topic_order_placed: str = "order.placed"
 
     class Config:

@@ -1,9 +1,8 @@
-# Docker Compose — Phase 1: Database layer only
-# Phase 2 will add Kafka, Redis, and service containers
-#
+# Docker Compose — CoreTest Full Stack
 # Usage: docker compose up -d
 
 services:
+  # === Databases ===
   orders-db:
     image: postgres:16
     container_name: coretest-orders-db
@@ -11,6 +10,7 @@ services:
       POSTGRES_DB: orders_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: changeme
+      TZ: UTC
     ports:
       - "5432:5432"
     volumes:
@@ -28,6 +28,7 @@ services:
       POSTGRES_DB: inventory_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: changeme
+      TZ: UTC
     ports:
       - "5433:5432"
     volumes:
@@ -38,6 +39,48 @@ services:
       timeout: 5s
       retries: 5
 
+  # === Messaging ===
+  kafka:
+    image: apache/kafka:latest
+    container_name: coretest-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    ports:
+      - "9094:9094"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # === Cache ===
+  redis:
+    image: redis:7-alpine
+    container_name: coretest-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   orders_data:
   inventory_data:
+  kafka_data:
+  redis_data:
