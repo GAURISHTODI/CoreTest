@@ -40,13 +40,19 @@ public class GlobalExceptionHandler {
                 .body(errorBody(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(errorBody(HttpStatus.BAD_REQUEST, "Malformed JSON request"));
+    }
+
     /**
      * 500 — Catch-all for unexpected errors.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        ex.printStackTrace(); // or log.error("Unexpected error", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorBody(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred"));
+                .body(errorBody(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred: " + ex.getMessage()));
     }
 
     private Map<String, Object> errorBody(HttpStatus status, String message) {

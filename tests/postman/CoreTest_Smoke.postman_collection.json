@@ -1,0 +1,170 @@
+{
+  "info": {
+    "name": "CoreTest Smoke Tests",
+    "_postman_id": "coretest-smoke-v1",
+    "description": "Quick smoke tests for both Order and Inventory services. Run via Newman in CI as a fast pre-check before the full REST Assured / Pytest suites.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "Inventory Service",
+      "item": [
+        {
+          "name": "GET /api/products — List Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{INVENTORY_BASE_URL}}/api/products",
+              "host": ["{{INVENTORY_BASE_URL}}"],
+              "path": ["api", "products"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is non-empty array', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "    pm.expect(data.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "// Save first product ID for subsequent requests",
+                  "var data = pm.response.json();",
+                  "if (data.length > 0) {",
+                  "    pm.environment.set('PRODUCT_ID', data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/products/:id — Single Product",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{INVENTORY_BASE_URL}}/api/products/{{PRODUCT_ID}}",
+              "host": ["{{INVENTORY_BASE_URL}}"],
+              "path": ["api", "products", "{{PRODUCT_ID}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data).to.have.property('id');",
+                  "    pm.expect(data).to.have.property('name');",
+                  "    pm.expect(data).to.have.property('stock');",
+                  "    pm.expect(data).to.have.property('price');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Order Service",
+      "item": [
+        {
+          "name": "POST /api/orders — Create Order",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{ORDER_BASE_URL}}/api/orders",
+              "host": ["{{ORDER_BASE_URL}}"],
+              "path": ["api", "orders"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{PRODUCT_ID}}\",\n  \"quantity\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Order has PENDING status', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data.status).to.eql('PENDING');",
+                  "});",
+                  "",
+                  "// Save order ID for the GET test",
+                  "var data = pm.response.json();",
+                  "pm.environment.set('ORDER_ID', data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/orders/:id — Get Order",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{ORDER_BASE_URL}}/api/orders/{{ORDER_ID}}",
+              "host": ["{{ORDER_BASE_URL}}"],
+              "path": ["api", "orders", "{{ORDER_ID}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Order has correct ID', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data.id).to.eql(pm.environment.get('ORDER_ID'));",
+                  "});",
+                  "",
+                  "pm.test('Response has required fields', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data).to.have.property('id');",
+                  "    pm.expect(data).to.have.property('productId');",
+                  "    pm.expect(data).to.have.property('quantity');",
+                  "    pm.expect(data).to.have.property('status');",
+                  "    pm.expect(data).to.have.property('createdAt');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

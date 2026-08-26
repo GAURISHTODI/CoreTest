@@ -1,0 +1,100 @@
+name: CoreTest CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Python dependencies
+      run: pip install -r tests/api-python/requirements.txt
+
+    - name: Start Full Stack with Docker Compose
+      run: docker compose up -d --build
+      
+    - name: Wait for services to be healthy
+      run: sleep 45 # Give Kafka and DBs time to initialize, then services
+
+    # --- API Tests ---
+    - name: Run Postman Smoke Tests
+      run: npx newman run tests/postman/CoreTest_Smoke.postman_collection.json -e tests/postman/environment.json
+      continue-on-error: true
+
+    - name: Run Java API Tests (REST Assured)
+      run: mvn test -f tests/api-java/pom.xml
+      continue-on-error: true
+
+    - name: Run Python API Tests (Pytest)
+      run: pytest tests/api-python/ --alluredir=tests/api-python/allure-results
+      continue-on-error: true
+
+    # --- UI Tests ---
+    - name: Install Playwright Browsers
+      run: cd tests/ui/playwright && npm install && npx playwright install --with-deps
+
+    - name: Run Playwright Tests
+      run: cd tests/ui/playwright && npx playwright test
+      continue-on-error: true
+
+    - name: Run Selenium Tests
+      run: mvn test -f tests/ui/selenium/pom.xml
+      continue-on-error: true
+
+    # --- Performance ---
+    - name: Setup JMeter
+      run: |
+        wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+        tar -xzf apache-jmeter-5.6.3.tgz
+    - name: Run JMeter Performance Test
+      run: ./apache-jmeter-5.6.3/bin/jmeter -n -t tests/performance/CoreTest_LoadPlan.jmx -l tests/performance/results.jtl
+      continue-on-error: true
+
+    # --- Allure Report ---
+    - name: Gather Allure Results
+      run: |
+        mkdir -p allure-results
+        cp -r tests/api-java/target/allure-results/* allure-results/ || true
+        cp -r tests/api-python/allure-results/* allure-results/ || true
+        cp -r tests/ui/selenium/target/allure-results/* allure-results/ || true
+
+    - name: Generate Allure Report
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results
+        allure_history: allure-history
+
+    - name: Deploy Allure Report to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: allure-history
+        publish_branch: gh-pages

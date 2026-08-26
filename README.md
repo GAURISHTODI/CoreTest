@@ -75,19 +75,39 @@ Java, Spring Boot, Kafka, Docker, Kubernetes, Selenium, Playwright, REST Assured
 - Node.js 18+
 
 
+### Run the Application
+Start the full stack (Order Service, Inventory Service, Frontend, DBs, Kafka, Redis, Prometheus, Grafana) locally using Docker Compose:
+```bash
+docker compose up --build -d
+```
+- Frontend: `http://localhost:5173`
+- Order API: `http://localhost:8080/api/orders`
+- Inventory API: `http://localhost:8000/api/products`
+- Grafana Dashboard: `http://localhost:3000` (admin/admin)
+- Prometheus: `http://localhost:9090`
+
 ### Run Tests
 ```bash
+# Postman Smoke Tests
+npx newman run tests/postman/CoreTest_Smoke.postman_collection.json -e tests/postman/environment.json
+
 # API tests (Java)
 cd tests/api-java && mvn test
 
 # API tests (Python)
 cd tests/api-python && pytest
 
-# UI tests
-cd tests/ui && mvn test   # or npx playwright test
+# UI tests (Selenium)
+cd tests/ui/selenium && mvn test
+
+# UI tests (Playwright)
+cd tests/ui/playwright && npx playwright test
+
+# Mobile tests (Appium)
+cd tests/mobile && mvn test
 
 # Performance tests
-cd tests/performance && jmeter -n -t load-test.jmx
+cd tests/performance && jmeter -n -t CoreTest_LoadPlan.jmx
 ```
 
 Test reports are generated via Allure and published automatically by the CI pipeline.
@@ -121,8 +141,8 @@ coretest/
 - [x] API test automation
 - [x] UI + mobile automation
 - [x] CI/CD pipeline with reporting
-- [ ] Full observability dashboard (Prometheus/Grafana)
-- [ ] Kubernetes production deployment
+- [x] Full observability dashboard (Prometheus/Grafana)
+- [x] Containerization and Kubernetes deployment manifests
 
 ---
 

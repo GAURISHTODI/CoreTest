@@ -1,0 +1,31 @@
+{
+  "id": "coretest-local-env",
+  "name": "CoreTest Local",
+  "values": [
+    {
+      "key": "ORDER_BASE_URL",
+      "value": "http://localhost:8080",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "INVENTORY_BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "PRODUCT_ID",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "ORDER_ID",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

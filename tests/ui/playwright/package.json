@@ -1,0 +1,12 @@
+{
+  "name": "coretest-playwright",
+  "version": "1.0.0",
+  "description": "Playwright UI tests",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.42.1"
+  }
+}

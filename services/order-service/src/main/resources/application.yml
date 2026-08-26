@@ -31,6 +31,12 @@ app:
     topic:
       order-placed: ${KAFKA_TOPIC_ORDER_PLACED:order.placed}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+
 logging:
   level:
     com.coretest.order: DEBUG
